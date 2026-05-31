@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: url-shortener-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5434/shortener}
+    username: ${SPRING_DATASOURCE_USERNAME:shortener}
+    password: ${SPRING_DATASOURCE_PASSWORD:shortener}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  cache:
+    cache-names: shortLinks
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=5m
+
+app:
+  public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
+  cors-allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:8081}
