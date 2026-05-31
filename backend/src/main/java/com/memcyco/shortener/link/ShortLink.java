@@ -16,8 +16,13 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "short_links", indexes = {
     @Index(name = "idx_short_links_code", columnList = "shortCode", unique = true)
 })
@@ -48,9 +53,11 @@ public class ShortLink {
   private List<String> tags = new ArrayList<>();
 
   @Column(nullable = false, updatable = false)
+  @Setter(AccessLevel.NONE)
   private Instant createdAt;
 
   @Column(nullable = false)
+  @Setter(AccessLevel.NONE)
   private Instant updatedAt;
 
   @PrePersist
@@ -83,75 +90,7 @@ public class ShortLink {
     return "active";
   }
 
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getShortCode() {
-    return shortCode;
-  }
-
-  public void setShortCode(String shortCode) {
-    this.shortCode = shortCode;
-  }
-
-  public String getOriginalUrl() {
-    return originalUrl;
-  }
-
-  public void setOriginalUrl(String originalUrl) {
-    this.originalUrl = originalUrl;
-  }
-
-  public String getStrategy() {
-    return strategy;
-  }
-
-  public void setStrategy(String strategy) {
-    this.strategy = strategy;
-  }
-
-  public Instant getExpiresAt() {
-    return expiresAt;
-  }
-
-  public void setExpiresAt(Instant expiresAt) {
-    this.expiresAt = expiresAt;
-  }
-
-  public Long getMaxClicks() {
-    return maxClicks;
-  }
-
-  public void setMaxClicks(Long maxClicks) {
-    this.maxClicks = maxClicks;
-  }
-
-  public long getClickCount() {
-    return clickCount;
-  }
-
-  public void setClickCount(long clickCount) {
-    this.clickCount = clickCount;
-  }
-
-  public List<String> getTags() {
-    return tags;
-  }
-
   public void setTags(List<String> tags) {
     this.tags = tags == null ? new ArrayList<>() : new ArrayList<>(tags);
-  }
-
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
-
-  public Instant getUpdatedAt() {
-    return updatedAt;
   }
 }

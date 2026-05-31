@@ -12,8 +12,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "click_events", indexes = {
     @Index(name = "idx_click_events_link_time", columnList = "short_link_id,clickedAt")
 })
@@ -37,48 +41,4 @@ public class ClickEvent {
 
   @Column(length = 128)
   private String ipAddress;
-
-  public Long getId() {
-    return id;
-  }
-
-  public ShortLink getShortLink() {
-    return shortLink;
-  }
-
-  public void setShortLink(ShortLink shortLink) {
-    this.shortLink = shortLink;
-  }
-
-  public Instant getClickedAt() {
-    return clickedAt;
-  }
-
-  public void setClickedAt(Instant clickedAt) {
-    this.clickedAt = clickedAt;
-  }
-
-  public String getReferer() {
-    return referer;
-  }
-
-  public void setReferer(String referer) {
-    this.referer = referer;
-  }
-
-  public String getUserAgent() {
-    return userAgent;
-  }
-
-  public void setUserAgent(String userAgent) {
-    this.userAgent = userAgent;
-  }
-
-  public String getIpAddress() {
-    return ipAddress;
-  }
-
-  public void setIpAddress(String ipAddress) {
-    this.ipAddress = ipAddress;
-  }
 }

@@ -15,32 +15,32 @@ services:
       timeout: 5s
       retries: 10
 
-  # backend:
-  #   build:
-  #     context: .
-  #     dockerfile: backend/Dockerfile
-  #   environment:
-  #     SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5433/shortener
-  #     SPRING_DATASOURCE_USERNAME: shortener
-  #     SPRING_DATASOURCE_PASSWORD: shortener
-  #     APP_PUBLIC_BASE_URL: http://localhost:8080
-  #     APP_CORS_ALLOWED_ORIGINS: http://localhost:8081,http://localhost:5173
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   ports:
-  #     - "8080:8080"
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shortener
+      SPRING_DATASOURCE_USERNAME: shortener
+      SPRING_DATASOURCE_PASSWORD: shortener
+      APP_PUBLIC_BASE_URL: http://localhost:8080
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:8081,http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
 
-  # frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: frontend/Dockerfile
-  #     args:
-  #       VITE_API_BASE_URL: ""
-  #   depends_on:
-  #     - backend
-  #   ports:
-  #     - "8081:80"
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
 
 volumes:
   postgres_data:

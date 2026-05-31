@@ -17,6 +17,7 @@ When running with Docker Compose:
 - Redirect endpoint: `http://localhost:8080/{shortCode}`
 - Strategies: `http://localhost:8080/api/strategies`
 - PostgreSQL: `localhost:5434`, database/user/password all `shortener`
+- Backend container DB URL: `jdbc:postgresql://postgres:5432/shortener`
 
 When running locally for development:
 
