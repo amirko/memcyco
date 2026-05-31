@@ -19,13 +19,32 @@ describe('LinksTable', () => {
     expect(screen.getByText('click limited')).toBeInTheDocument();
     expect(screen.getByText('paid')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: link.shortCode }));
+    await user.click(screen.getByRole('row', { name: new RegExp(link.shortCode) }));
     await user.click(screen.getByTitle(/edit link/i));
     await user.click(screen.getByTitle(/delete link/i));
 
     expect(onSelect).toHaveBeenCalledWith(link);
     expect(onEdit).toHaveBeenCalledWith(link);
     expect(onDelete).toHaveBeenCalledWith(link);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('supports keyboard row selection and ignores destination link clicks', async () => {
+    const user = userEvent.setup();
+    const link = shortLink();
+    const onSelect = vi.fn();
+
+    render(<LinksTable links={[link]} selectedId={null} onSelect={onSelect} onEdit={vi.fn()} onDelete={vi.fn()} />);
+
+    await user.click(screen.getByRole('link', { name: link.originalUrl }));
+    expect(onSelect).not.toHaveBeenCalled();
+
+    screen.getByRole('row', { name: new RegExp(link.shortCode) }).focus();
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    expect(onSelect).toHaveBeenCalledWith(link);
   });
 
   it('renders an empty state', () => {

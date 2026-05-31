@@ -17,7 +17,8 @@ class RedirectControllerTest {
     CapturingClickTrackingService tracking = new CapturingClickTrackingService();
     RedirectController controller = new RedirectController(
         resolving(new RedirectTarget(9L, "go", "https://example.com/target", null, 10L, 3)),
-        tracking
+        tracking,
+        allowingRateLimiter()
     );
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.addHeader(HttpHeaders.REFERER, "https://referer.example");
@@ -38,7 +39,7 @@ class RedirectControllerTest {
   @Test
   void missingTargetReturnsNotFoundWithoutTracking() {
     CapturingClickTrackingService tracking = new CapturingClickTrackingService();
-    RedirectController controller = new RedirectController(resolving(null), tracking);
+    RedirectController controller = new RedirectController(resolving(null), tracking, allowingRateLimiter());
 
     ResponseEntity<Void> response = controller.redirect("missing", new MockHttpServletRequest());
 
@@ -51,7 +52,8 @@ class RedirectControllerTest {
     CapturingClickTrackingService tracking = new CapturingClickTrackingService();
     RedirectController controller = new RedirectController(
         resolving(new RedirectTarget(1L, "old", "https://example.com", Instant.now().minusSeconds(1), null, 0)),
-        tracking
+        tracking,
+        allowingRateLimiter()
     );
 
     ResponseEntity<Void> response = controller.redirect("old", new MockHttpServletRequest());
@@ -65,12 +67,30 @@ class RedirectControllerTest {
     CapturingClickTrackingService tracking = new CapturingClickTrackingService();
     RedirectController controller = new RedirectController(
         resolving(new RedirectTarget(1L, "maxed", "https://example.com", null, 1L, 1)),
-        tracking
+        tracking,
+        allowingRateLimiter()
     );
 
     ResponseEntity<Void> response = controller.redirect("maxed", new MockHttpServletRequest());
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    assertThat(tracking.shortLinkId).isNull();
+  }
+
+  @Test
+  void rateLimitedRequestReturnsTooManyRequestsWithoutResolvingOrTracking() {
+    CapturingClickTrackingService tracking = new CapturingClickTrackingService();
+    CountingRedirectService redirectService = new CountingRedirectService();
+    RedirectController controller = new RedirectController(redirectService, tracking, new RedirectRateLimiter(1, 60));
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRemoteAddr("203.0.113.10");
+
+    assertThat(controller.redirect("go", request).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    ResponseEntity<Void> limited = controller.redirect("go", request);
+
+    assertThat(limited.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+    assertThat(limited.getHeaders().getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo("60");
+    assertThat(redirectService.calls).isEqualTo(1);
     assertThat(tracking.shortLinkId).isNull();
   }
 
@@ -81,6 +101,24 @@ class RedirectControllerTest {
         return Optional.ofNullable(target);
       }
     };
+  }
+
+  private RedirectRateLimiter allowingRateLimiter() {
+    return new RedirectRateLimiter(0, 60);
+  }
+
+  private static class CountingRedirectService extends RedirectService {
+    int calls;
+
+    CountingRedirectService() {
+      super(null);
+    }
+
+    @Override
+    public Optional<RedirectTarget> resolve(String shortCode) {
+      calls++;
+      return Optional.empty();
+    }
   }
 
   private static class CapturingClickTrackingService extends ClickTrackingService {

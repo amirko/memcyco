@@ -1,3 +1,4 @@
+import type { KeyboardEvent, MouseEvent } from 'react';
 import type { ShortLink } from '../types/domain';
 
 interface Props {
@@ -33,14 +34,19 @@ export default function LinksTable({ links, selectedId, onSelect, onEdit, onDele
           </thead>
           <tbody>
             {links.map(link => (
-              <tr key={link.id} className={selectedId === link.id ? 'selected' : ''}>
+              <tr
+                key={link.id}
+                className={selectedId === link.id ? 'selected selectable-row' : 'selectable-row'}
+                tabIndex={0}
+                aria-selected={selectedId === link.id}
+                onClick={() => onSelect(link)}
+                onKeyDown={event => selectWithKeyboard(event, link, onSelect)}
+              >
                 <td>
-                  <button className="code-link" onClick={() => onSelect(link)}>
-                    {link.shortCode}
-                  </button>
+                  <span className="code-link">{link.shortCode}</span>
                 </td>
                 <td>
-                  <a href={link.originalUrl} target="_blank" rel="noreferrer">
+                  <a href={link.originalUrl} target="_blank" rel="noreferrer" onClick={stopRowClick}>
                     {link.originalUrl}
                   </a>
                   <div className="tags">
@@ -56,10 +62,10 @@ export default function LinksTable({ links, selectedId, onSelect, onEdit, onDele
                 <td>{new Date(link.createdAt).toLocaleDateString()}</td>
                 <td>
                   <div className="row-actions">
-                    <button type="button" onClick={() => onEdit(link)} title="Edit link">
+                    <button type="button" onClick={event => handleAction(event, link, onEdit)} title="Edit link">
                       Edit
                     </button>
-                    <button type="button" onClick={() => onDelete(link)} title="Delete link">
+                    <button type="button" onClick={event => handleAction(event, link, onDelete)} title="Delete link">
                       Delete
                     </button>
                   </div>
@@ -85,4 +91,24 @@ function formatStatus(status: ShortLink['status']) {
     return 'click limited';
   }
   return status;
+}
+
+function selectWithKeyboard(
+  event: KeyboardEvent<HTMLTableRowElement>,
+  link: ShortLink,
+  onSelect: (link: ShortLink) => void
+) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    onSelect(link);
+  }
+}
+
+function handleAction(event: MouseEvent<HTMLButtonElement>, link: ShortLink, action: (link: ShortLink) => void) {
+  event.stopPropagation();
+  action(link);
+}
+
+function stopRowClick(event: MouseEvent<HTMLAnchorElement>) {
+  event.stopPropagation();
 }

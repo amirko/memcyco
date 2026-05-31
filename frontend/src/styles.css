@@ -269,10 +269,24 @@ tr.selected {
   background: #f2f8fa;
 }
 
+.selectable-row {
+  cursor: pointer;
+}
+
+.selectable-row:hover {
+  background: #f7fafb;
+}
+
+.selectable-row:focus-visible {
+  outline: 3px solid rgba(27, 111, 143, 0.18);
+  outline-offset: -3px;
+}
+
+.selectable-row.selected:hover {
+  background: #f2f8fa;
+}
+
 .code-link {
-  border: 0;
-  padding: 0;
-  background: transparent;
   color: #1b6f8f;
   font-weight: 800;
 }

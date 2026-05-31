@@ -56,6 +56,8 @@ SPRING_DATASOURCE_USERNAME=shortener
 SPRING_DATASOURCE_PASSWORD=shortener
 APP_PUBLIC_BASE_URL=http://localhost:8080
 APP_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8081
+APP_RATE_LIMIT_REDIRECTS_PER_WINDOW=120
+APP_RATE_LIMIT_WINDOW_SECONDS=60
 ```
 
 ### Frontend Only
@@ -155,10 +157,12 @@ Redirect status codes:
 - `404 Not Found` for a missing code
 - `410 Gone` for an expired link
 - `429 Too Many Requests` for a click-exhausted link
+- `429 Too Many Requests` with `Retry-After` when a client exceeds the redirect rate limit
 
 ## Design Decisions
 
 - Redirect reads are cached with Caffeine under the `shortLinks` cache to keep the public path fast.
+- Public redirects are rate limited per client IP before cache/database resolution. The default is 120 redirect attempts per 60 seconds and can be configured with `APP_RATE_LIMIT_REDIRECTS_PER_WINDOW` and `APP_RATE_LIMIT_WINDOW_SECONDS`.
 - Click tracking is async, so the redirect response is not blocked by analytics persistence.
 - Cache entries are evicted after CRUD changes. Click tracking only evicts click-limited links, keeping `maxClicks` checks current without invalidating unlimited links on every click.
 - PostgreSQL is the production database in Compose; H2 is used for repeatable integration tests.

@@ -14,14 +14,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class RedirectController {
   private final RedirectService redirectService;
   private final ClickTrackingService clickTrackingService;
+  private final RedirectRateLimiter rateLimiter;
 
-  public RedirectController(RedirectService redirectService, ClickTrackingService clickTrackingService) {
+  public RedirectController(
+      RedirectService redirectService,
+      ClickTrackingService clickTrackingService,
+      RedirectRateLimiter rateLimiter
+  ) {
     this.redirectService = redirectService;
     this.clickTrackingService = clickTrackingService;
+    this.rateLimiter = rateLimiter;
   }
 
   @GetMapping("/{shortCode:[A-Za-z0-9_-]{3,64}}")
   public ResponseEntity<Void> redirect(@PathVariable String shortCode, HttpServletRequest request) {
+    if (!rateLimiter.allow(clientIp(request))) {
+      return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+          .header(HttpHeaders.RETRY_AFTER, Long.toString(rateLimiter.retryAfterSeconds()))
+          .build();
+    }
+
     return redirectService.resolve(shortCode)
         .map(target -> buildRedirect(target, request))
         .orElseGet(() -> ResponseEntity.notFound().build());

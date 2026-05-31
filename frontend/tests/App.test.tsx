@@ -37,7 +37,7 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.getByText(/loading links/i)).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'abc123' })).toBeInTheDocument();
+    expect(await screen.findByRole('row', { name: /abc123/i })).toBeInTheDocument();
     expect(await screen.findByText('2026-05-30')).toBeInTheDocument();
     expect(mockedApi.listLinks).toHaveBeenCalledTimes(1);
     expect(mockedApi.strategies).toHaveBeenCalledTimes(1);
@@ -53,7 +53,7 @@ describe('App', () => {
 
     render(<App />);
 
-    await screen.findByRole('button', { name: 'abc123' });
+    await screen.findByRole('row', { name: /abc123/i });
     await user.type(screen.getByLabelText(/destination url/i), 'https://example.com/new');
     await user.click(screen.getByRole('button', { name: /create short link/i }));
 
@@ -61,7 +61,27 @@ describe('App', () => {
     expect(mockedApi.createLink).toHaveBeenCalledWith(
       expect.objectContaining({ originalUrl: 'https://example.com/new', strategy: 'random_base62' })
     );
-    expect(await screen.findByRole('button', { name: 'newone' })).toBeInTheDocument();
+    expect(await screen.findByRole('row', { name: /newone/i })).toBeInTheDocument();
+  });
+
+  it('loads analytics for the selected table row', async () => {
+    const user = userEvent.setup();
+    const first = shortLink({ id: 1, shortCode: 'first' });
+    const second = shortLink({ id: 2, shortCode: 'second', originalUrl: 'https://example.com/second' });
+    mockedApi.listLinks.mockResolvedValue([first, second]);
+    mockedApi.analytics
+      .mockResolvedValueOnce(analytics({ totalClicks: 3, timeSeries: [{ label: 'first-day', count: 3 }] }))
+      .mockResolvedValueOnce(analytics({ totalClicks: 9, timeSeries: [{ label: 'second-day', count: 9 }] }));
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: 'first' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('row', { name: /second/i }));
+
+    expect(await screen.findByRole('heading', { name: 'second' })).toBeInTheDocument();
+    expect(await screen.findByText('second-day')).toBeInTheDocument();
+    expect(mockedApi.analytics).toHaveBeenLastCalledWith(2);
   });
 
   it('shows API errors', async () => {
@@ -87,7 +107,7 @@ describe('App', () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByRole('button', { name: 'abc123' })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /abc123/i })).toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
